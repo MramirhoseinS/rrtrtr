@@ -115,18 +115,73 @@ export default function Home() {
     }
   };
 
+  // Reset handler: emits a reset event to server
+  const handleReset = () => {
+    socketRef.current?.emit("video-event", { type: "reset" });
+  };
+
   return (
     <main style={{ padding: 20 }}>
       <h1>🎬 هم‌زمان‌سازی ویدیو</h1>
-      <form onSubmit={handleUrlSubmit} style={{ marginBottom: 16 }}>
+      <form
+        onSubmit={handleUrlSubmit}
+        style={{
+          marginBottom: 16,
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+        }}
+      >
         <input
           type="text"
           value={inputUrl}
           onChange={handleUrlChange}
           placeholder="Video URL"
-          style={{ width: 300, marginRight: 8 }}
+          style={{
+            width: 320,
+            padding: "8px 12px",
+            borderRadius: 6,
+            border: "1px solid #ccc",
+            fontSize: 16,
+            outline: "none",
+            transition: "border 0.2s",
+            background: "#fafafa",
+          }}
         />
-        <button type="submit">تغییر ویدیو</button>
+        <button
+          type="submit"
+          style={{
+            padding: "8px 16px",
+            borderRadius: 6,
+            border: "none",
+            background: "#0070f3",
+            color: "#fff",
+            fontWeight: 500,
+            fontSize: 16,
+            cursor: "pointer",
+            transition: "background 0.2s",
+          }}
+        >
+          تغییر ویدیو
+        </button>
+        <button
+          type="button"
+          onClick={handleReset}
+          style={{
+            padding: "8px 16px",
+            borderRadius: 6,
+            border: "none",
+            background: "#e53e3e",
+            color: "#fff",
+            fontWeight: 500,
+            fontSize: 16,
+            cursor: "pointer",
+            marginLeft: 8,
+            transition: "background 0.2s",
+          }}
+        >
+          ریست همه
+        </button>
       </form>
       {mounted && (
         <video
@@ -138,10 +193,9 @@ export default function Home() {
           onPlay={handlePlay}
           onPause={handlePause}
           onSeeked={handleSeek}
-          style={{ background: "#000" }}
+          style={{ background: "#000", borderRadius: 8, boxShadow: "0 2px 12px #0002" }}
         />
       )}
     </main>
   );
 }
-

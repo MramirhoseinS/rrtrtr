@@ -41,6 +41,14 @@ export default function handler(req, res) {
             videoState.playing = false;
             io.emit("video-event", { type: "changeUrl", url: data.url });
             break;
+          case "reset":
+            videoState = {
+              url: "https://www.w3schools.com/html/mov_bbb.mp4",
+              playing: false,
+              played: 0,
+            };
+            io.emit("sync", videoState);
+            break;
           default:
             break;
         }
