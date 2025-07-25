@@ -132,6 +132,8 @@ export default function Home() {
     return (
       <>
         <input
+          className="bg-blue-200 text-black"
+
           style={{
             width: 320,
             padding: "8px 12px",
@@ -140,7 +142,6 @@ export default function Home() {
             fontSize: 16,
             outline: "none",
             transition: "border 0.2s",
-            background: "#fafafa",
           }}
           onChange={(e) => {
             setValue(e.target.value);
@@ -182,6 +183,7 @@ export default function Home() {
           value={inputUrl}
           onChange={handleUrlChange}
           placeholder="Video URL"
+          className="bg-blue-200 text-black"
           style={{
             width: 320,
             padding: "8px 12px",
@@ -190,7 +192,6 @@ export default function Home() {
             fontSize: 16,
             outline: "none",
             transition: "border 0.2s",
-            background: "#fafafa",
           }}
         />
         <button
