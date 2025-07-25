@@ -120,6 +120,51 @@ export default function Home() {
     socketRef.current?.emit("video-event", { type: "reset" });
   };
 
+  const [check, setCheck] = useState(false);
+  const [value, setValue] = useState(false);
+  const handleCheck = () => {
+    if (value === process.env.NEXT_PUBLIC_OK) {
+      setCheck(true);
+    }
+  };
+
+  if (!check) {
+    return (
+      <>
+        <input
+          style={{
+            width: 320,
+            padding: "8px 12px",
+            borderRadius: 6,
+            border: "1px solid #ccc",
+            fontSize: 16,
+            outline: "none",
+            transition: "border 0.2s",
+            background: "#fafafa",
+          }}
+          onChange={(e) => {
+            setValue(e.target.value);
+          }}
+        />
+        <button
+          style={{
+            padding: "8px 16px",
+            borderRadius: 6,
+            border: "none",
+            background: "#0070f3",
+            color: "#fff",
+            fontWeight: 500,
+            fontSize: 16,
+            cursor: "pointer",
+            transition: "background 0.2s",
+          }}
+          onClick={handleCheck}
+        >
+          ok
+        </button>
+      </>
+    );
+  }
   return (
     <main style={{ padding: 20 }}>
       <h1>🎬 هم‌زمان‌سازی ویدیو</h1>
