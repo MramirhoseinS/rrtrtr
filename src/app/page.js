@@ -1,103 +1,147 @@
-import Image from "next/image";
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import { io } from "socket.io-client";
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.js
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const playerRef = useRef(null);
+  const [playing, setPlaying] = useState(false);
+  const [url, setUrl] = useState("https://www.w3schools.com/html/mov_bbb.mp4");
+  const [inputUrl, setInputUrl] = useState(url);
+  const socketRef = useRef(null);
+  const [mounted, setMounted] = useState(false);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+  // جلوگیری از لوپ و lag با تمایز رویدادهای local و remote
+  const isRemoteRef = useRef(false);
+
+  useEffect(() => {
+    setMounted(true);
+
+    const socket = io({
+      path: "/api/ws",
+    });
+    socketRef.current = socket;
+
+    socket.on("sync", (state) => {
+      isRemoteRef.current = true;
+      setUrl(state.url);
+      setInputUrl(state.url);
+      setPlaying(state.playing);
+      setTimeout(() => {
+        if (playerRef.current) playerRef.current.currentTime = state.played;
+        isRemoteRef.current = false;
+      }, 200);
+    });
+
+    socket.on("video-event", (data) => {
+      if (!playerRef.current) return;
+      isRemoteRef.current = true;
+      switch (data.type) {
+        case "play":
+          setPlaying(true);
+          break;
+        case "pause":
+          setPlaying(false);
+          break;
+        case "seek":
+          playerRef.current.currentTime = data.time;
+          break;
+        case "changeUrl":
+          setUrl(data.url);
+          setInputUrl(data.url);
+          setPlaying(false);
+          setTimeout(() => {
+            if (playerRef.current) playerRef.current.currentTime = 0;
+            isRemoteRef.current = false;
+          }, 200);
+          break;
+        default:
+          break;
+      }
+      setTimeout(() => {
+        isRemoteRef.current = false;
+      }, 50);
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
+
+  // اجرای play/pause واقعی فقط در یک useEffect و فقط زمانی که state تغییر کند
+  useEffect(() => {
+    if (!mounted) return;
+    const video = playerRef.current;
+    if (!video) return;
+
+    if (playing) {
+      if (video.paused) {
+        video.play().catch(() => {});
+      }
+    } else {
+      if (!video.paused) {
+        video.pause();
+      }
+    }
+  }, [playing, url, mounted]);
+
+  const handlePlay = () => {
+    if (!isRemoteRef.current) {
+      socketRef.current?.emit("video-event", { type: "play" });
+    }
+  };
+
+  const handlePause = () => {
+    if (!isRemoteRef.current) {
+      socketRef.current?.emit("video-event", { type: "pause" });
+    }
+  };
+
+  const handleSeek = () => {
+    const currentTime = playerRef.current?.currentTime || 0;
+    if (!isRemoteRef.current) {
+      socketRef.current?.emit("video-event", { type: "seek", time: currentTime });
+    }
+  };
+
+  const handleUrlChange = (e) => setInputUrl(e.target.value);
+
+  const handleUrlSubmit = (e) => {
+    e.preventDefault();
+    if (inputUrl && inputUrl !== url) {
+      setUrl(inputUrl);
+      setPlaying(false);
+      socketRef.current?.emit("video-event", { type: "changeUrl", url: inputUrl });
+    }
+  };
+
+  return (
+    <main style={{ padding: 20 }}>
+      <h1>🎬 هم‌زمان‌سازی ویدیو</h1>
+      <form onSubmit={handleUrlSubmit} style={{ marginBottom: 16 }}>
+        <input
+          type="text"
+          value={inputUrl}
+          onChange={handleUrlChange}
+          placeholder="Video URL"
+          style={{ width: 300, marginRight: 8 }}
+        />
+        <button type="submit">تغییر ویدیو</button>
+      </form>
+      {mounted && (
+        <video
+          ref={playerRef}
+          src={url}
+          controls
+          width="100%"
+          height="auto"
+          onPlay={handlePlay}
+          onPause={handlePause}
+          onSeeked={handleSeek}
+          style={{ background: "#000" }}
+        />
+      )}
+    </main>
   );
 }
+
