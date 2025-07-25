@@ -1,5 +1,12 @@
 import { Server } from "socket.io";
 
+// وضعیت ویدیو را در سطح فایل نگه می‌داریم (در سرور serverless کافی نیست)
+let videoState = {
+  url: "https://www.w3schools.com/html/mov_bbb.mp4",
+  playing: false,
+  played: 0,
+};
+
 let io;
 
 export default function handler(req, res) {
@@ -9,13 +16,6 @@ export default function handler(req, res) {
       addTrailingSlash: false,
       cors: { origin: "*" },
     });
-
-    // مقدار اولیه وضعیت ویدیو
-    let videoState = {
-      url: "https://www.w3schools.com/html/mov_bbb.mp4",
-      playing: false,
-      played: 0,
-    };
 
     io.on("connection", (socket) => {
       // ارسال وضعیت فعلی به کلاینت جدید
